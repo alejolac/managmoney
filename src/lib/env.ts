@@ -41,7 +41,18 @@ if (!parsed.success) {
   const detail = parsed.error.issues
     .map((issue) => `  - ${issue.path.join(".")}: ${issue.message}`)
     .join("\n");
-  throw new Error(`Configuracion invalida en .env:\n${detail}`);
+
+  // Donde arreglarlo depende de donde reviento: en Vercel no hay ningun .env
+  // que mirar, y el mensaje generico manda a buscar un archivo que no existe.
+  const donde = process.env.VERCEL
+    ? "en las variables de entorno del proyecto en Vercel\n" +
+      "(Settings > Environment Variables, tildando Production, Preview y\n" +
+      "Development, y despues Redeploy: agregarlas no rebuildea solo)"
+    : "en el archivo .env (copiar de .env.example)";
+
+  throw new Error(
+    `Faltan variables de entorno. Configuralas ${donde}:\n${detail}`,
+  );
 }
 
 export const env = parsed.data;
