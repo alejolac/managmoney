@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -39,3 +40,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma
+
+# datos de prueba locales
+scripts/.demo-data.json
+
+# herramientas de IA: son de esta maquina, no del proyecto.
+# .agents/ son docs bajadas que se reinstalan desde skills-lock.json, y
+# .claude/skills/ son symlinks con rutas absolutas que no sirven en otra compu.
+.claude/settings.local.json
+.claude/skills/
+.agents/
+.windsurf/

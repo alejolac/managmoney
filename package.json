@@ -4,23 +4,58 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "verify:auth": "tsx --conditions react-server scripts/verify-auth.ts",
+    "verify:money": "tsx scripts/verify-money.ts",
+    "verify:balances": "tsx scripts/verify-balances.ts",
+    "verify:installments": "tsx --conditions react-server scripts/verify-installments.ts",
+    "verify:filters": "tsx --conditions react-server scripts/verify-filters.ts",
+    "verify:bcu": "tsx --conditions react-server scripts/verify-bcu.ts",
+    "verify:dashboard": "tsx --conditions react-server scripts/verify-dashboard.ts",
+    "verify:envelopes": "tsx --conditions react-server scripts/verify-envelopes.ts",
+    "verify:commitments": "tsx --conditions react-server scripts/verify-commitments.ts",
+    "bench:db": "tsx scripts/bench-db.ts",
+    "status": "tsx scripts/status.ts",
+    "seed:demo": "tsx --conditions react-server scripts/seed-demo.ts",
+    "audit": "tsx --conditions react-server scripts/audit.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@node-rs/argon2": "^2.0.2",
+    "@prisma/adapter-pg": "^7.9.1",
+    "@prisma/client": "^7.9.1",
+    "date-fns": "^4.4.0",
+    "decimal.js": "^10.6.0",
+    "lucide-react": "^1.27.0",
     "next": "16.2.12",
+    "otplib": "^13.4.1",
+    "qrcode": "^1.5.4",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "server-only": "^0.0.1",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
+    "prisma": "^7.9.1",
     "tailwindcss": "^4",
+    "tsx": "^4.23.1",
     "typescript": "^5"
+  },
+  "overrides": {
+    "postcss": "^8.5.24",
+    "sharp": "^0.35.3"
   }
 }
