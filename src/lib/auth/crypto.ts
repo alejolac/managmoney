@@ -8,9 +8,23 @@ import {
 } from "node:crypto";
 import { env } from "@/lib/env";
 
-const KEY = Buffer.from(env.APP_ENCRYPTION_KEY, "base64");
 const IV_LENGTH = 12; // recomendado para GCM
 const AUTH_TAG_LENGTH = 16;
+
+let cachedKey: Buffer | undefined;
+
+/**
+ * La clave se arma en el primer cifrado, no al importar el modulo.
+ *
+ * Leerla arriba obligaba a tener APP_ENCRYPTION_KEY configurada para *importar*
+ * este archivo, y `safeEqual` —que ni la usa— arrastraba esa exigencia a todo
+ * lo que la llamara. Entre otras cosas, hacia fallar `next build`, que evalua
+ * cada ruta para recolectarla sin cifrar nada.
+ */
+function key(): Buffer {
+  cachedKey ??= Buffer.from(env.APP_ENCRYPTION_KEY, "base64");
+  return cachedKey;
+}
 
 /**
  * Cifra un texto con AES-256-GCM.
@@ -23,7 +37,7 @@ const AUTH_TAG_LENGTH = 16;
  */
 export function encrypt(plaintext: string): string {
   const iv = randomBytes(IV_LENGTH);
-  const cipher = createCipheriv("aes-256-gcm", KEY, iv);
+  const cipher = createCipheriv("aes-256-gcm", key(), iv);
   const ciphertext = Buffer.concat([
     cipher.update(plaintext, "utf8"),
     cipher.final(),
@@ -39,7 +53,7 @@ export function decrypt(payload: string): string {
   const authTag = raw.subarray(IV_LENGTH, IV_LENGTH + AUTH_TAG_LENGTH);
   const ciphertext = raw.subarray(IV_LENGTH + AUTH_TAG_LENGTH);
 
-  const decipher = createDecipheriv("aes-256-gcm", KEY, iv);
+  const decipher = createDecipheriv("aes-256-gcm", key(), iv);
   decipher.setAuthTag(authTag);
   return Buffer.concat([
     decipher.update(ciphertext),

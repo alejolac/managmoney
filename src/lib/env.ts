@@ -2,10 +2,19 @@ import "server-only";
 import { z } from "zod";
 
 /**
- * Variables de entorno validadas al arrancar.
+ * Variables de entorno validadas la primera vez que alguien las lee.
  *
- * Si falta algo, la app revienta en el boot con un mensaje claro en vez de
- * fallar a medias en runtime cuando ya estas guardando plata.
+ * Si falta algo revienta con un mensaje claro, en vez de fallar a medias
+ * cuando ya estas guardando plata.
+ *
+ * La validacion es perezosa y no al importar el modulo por una razon concreta:
+ * `next build` evalua todas las rutas para recolectarlas, sin atender ningun
+ * pedido. Validando al importar, el build entero pasaba a necesitar la
+ * contrasena de la base para hacer algo que nunca se conecta a la base, y
+ * fallaba con un stack trace de Turbopack que no decia que faltaba una
+ * variable. Encima no servia de nada como red de seguridad: en Vercel las
+ * variables se cambian sin rebuildear, asi que un build verde no prueba que la
+ * configuracion de ahora este bien.
  */
 const schema = z.object({
   DATABASE_URL: z.string().min(1, "Falta DATABASE_URL"),
@@ -35,24 +44,45 @@ const schema = z.object({
     .default("development"),
 });
 
-const parsed = schema.safeParse(process.env);
+type Env = z.infer<typeof schema>;
 
-if (!parsed.success) {
-  const detail = parsed.error.issues
-    .map((issue) => `  - ${issue.path.join(".")}: ${issue.message}`)
-    .join("\n");
+let cached: Env | undefined;
 
-  // Donde arreglarlo depende de donde reviento: en Vercel no hay ningun .env
-  // que mirar, y el mensaje generico manda a buscar un archivo que no existe.
-  const donde = process.env.VERCEL
-    ? "en las variables de entorno del proyecto en Vercel\n" +
-      "(Settings > Environment Variables, tildando Production, Preview y\n" +
-      "Development, y despues Redeploy: agregarlas no rebuildea solo)"
-    : "en el archivo .env (copiar de .env.example)";
+function load(): Env {
+  if (cached) return cached;
 
-  throw new Error(
-    `Faltan variables de entorno. Configuralas ${donde}:\n${detail}`,
-  );
+  const parsed = schema.safeParse(process.env);
+
+  if (!parsed.success) {
+    const detail = parsed.error.issues
+      .map((issue) => `  - ${issue.path.join(".")}: ${issue.message}`)
+      .join("\n");
+
+    // Donde arreglarlo depende de donde reviento: en Vercel no hay ningun .env
+    // que mirar, y el mensaje generico manda a buscar un archivo que no existe.
+    const donde = process.env.VERCEL
+      ? "en las variables de entorno del proyecto en Vercel\n" +
+        "(Settings > Environment Variables, tildando Production, Preview y\n" +
+        "Development, y despues Redeploy: agregarlas no rebuildea solo)"
+      : "en el archivo .env (copiar de .env.example)";
+
+    throw new Error(
+      `Faltan variables de entorno. Configuralas ${donde}:\n${detail}`,
+    );
+  }
+
+  cached = parsed.data;
+  return cached;
 }
 
-export const env = parsed.data;
+/**
+ * Se usa igual que un objeto comun (`env.DATABASE_URL`); la validacion se
+ * dispara sola en el primer acceso y despues queda cacheada.
+ */
+export const env: Env = new Proxy({} as Env, {
+  get: (_target, property) => load()[property as keyof Env],
+  has: (_target, property) => property in load(),
+  ownKeys: () => Reflect.ownKeys(load()),
+  getOwnPropertyDescriptor: (_target, property) =>
+    Reflect.getOwnPropertyDescriptor(load(), property),
+});
