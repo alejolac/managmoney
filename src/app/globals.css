@@ -117,6 +117,12 @@
     background-color: var(--background);
     color: var(--foreground);
     -webkit-font-smoothing: antialiased;
+
+    /* Con `viewportFit: "cover"` el lienzo llega hasta el borde fisico de la
+       pantalla, asi que en un iPhone acostado el notch tapa el costado. En
+       vertical estos valen 0 y no cambia nada. */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
 
   /* Los montos se leen en columna y comparan de un vistazo solo si todos los

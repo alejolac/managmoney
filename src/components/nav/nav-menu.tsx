@@ -45,7 +45,10 @@ export function BottomNav() {
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 backdrop-blur md:hidden">
-      <div className="flex pb-[env(safe-area-inset-bottom)]">
+      {/* La barra es `fixed`, asi que no hereda el padding seguro del body:
+          los costados van aca para que en horizontal no queden abajo del
+          notch, y el fondo igual llega hasta el borde. */}
+      <div className="flex pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
         {PRIMARY_NAV_ITEMS.map((item) => {
           const active = isNavItemActive(item.href, pathname);
           return (
