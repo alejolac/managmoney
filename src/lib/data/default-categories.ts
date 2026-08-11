@@ -37,8 +37,11 @@ export const DEFAULT_EXPENSE_CATEGORIES: CategorySeed[] = [
   { name: "Salidas", color: "#a855f7", icon: "party-popper" },
   { name: "Salud", color: "#ef4444", icon: "heart-pulse" },
   { name: "Deporte", color: "#84cc16", icon: "dumbbell" },
-  // Ropa, electronica, cosas para la casa, regalos.
+  // Ropa, electronica, cosas para la casa.
   { name: "Compras", color: "#eab308", icon: "shopping-bag" },
+  // Aparte de Compras: no es plata que gastas en vos y en diciembre se
+  // dispara, asi que mezclarla tapaba las dos cosas.
+  { name: "Regalos", color: "#d946ef", icon: "gift" },
   { name: "Suscripciones", color: "#ec4899", icon: "repeat" },
   // Impuestos, comisiones del banco, seguros: la plata que se va sola.
   { name: "Impuestos", color: "#475569", icon: "landmark" },
