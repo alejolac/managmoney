@@ -7,18 +7,18 @@ import {
 } from "@/lib/data/default-categories";
 
 /**
- * Crea el arbol de categorias inicial de un workspace.
+ * Crea las categorias iniciales de un workspace.
  *
  * Se corre una sola vez, al registrarse. A partir de ahi el catalogo lo
  * manejas vos: nada del sistema agrega categorias despues de esto.
  */
-async function createCategoryTree(
+async function createCategories(
   tx: Prisma.TransactionClient,
   workspaceId: string,
   kind: CategoryKind,
   seeds: CategorySeed[],
 ) {
-  // Tres queries y no una por categoria: creando de a una eran ~30 idas y
+  // Una sola query y no una por categoria: creando de a una eran ~30 idas y
   // vueltas a la base y la transaccion se pasaba de los 5s de timeout.
   await tx.category.createMany({
     data: seeds.map((seed, index) => ({
@@ -31,32 +31,6 @@ async function createCategoryTree(
       sortOrder: index,
     })),
   });
-
-  // Los hijos necesitan el id del padre, que solo conocemos despues de crearlos.
-  const parents = await tx.category.findMany({
-    where: { workspaceId, kind, parentId: null },
-    select: { id: true, name: true },
-  });
-  const idByName = new Map(parents.map((parent) => [parent.name, parent.id]));
-
-  const children = seeds.flatMap((seed) => {
-    const parentId = idByName.get(seed.name);
-    if (!parentId || !seed.children?.length) return [];
-
-    return seed.children.map((child, childIndex) => ({
-      workspaceId,
-      kind,
-      parentId,
-      name: child.name,
-      // Las subcategorias heredan el color del padre para que los graficos
-      // se lean como bloques coherentes al agrupar por categoria madre.
-      color: seed.color,
-      icon: child.icon,
-      sortOrder: childIndex,
-    }));
-  });
-
-  if (children.length) await tx.category.createMany({ data: children });
 }
 
 /**
@@ -75,13 +49,13 @@ export async function bootstrapWorkspace(
     },
   });
 
-  await createCategoryTree(
+  await createCategories(
     tx,
     workspace.id,
     CategoryKind.EXPENSE,
     DEFAULT_EXPENSE_CATEGORIES,
   );
-  await createCategoryTree(
+  await createCategories(
     tx,
     workspace.id,
     CategoryKind.INCOME,

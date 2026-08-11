@@ -1,9 +1,16 @@
 /**
  * Catalogo inicial de categorias.
  *
+ * Es plano a proposito. La version anterior tenia 12 madres con ~40 hijas y
+ * cargar un gasto se volvia un acertijo: ¿el super va en "Comida >
+ * Supermercado"? ¿el cafe en "Comida > Cafe y snacks" o en "Salidas y ocio"?
+ * Categorizar tiene que ser una decision de un segundo, y para eso conviene
+ * tener pocas cajas obvias antes que muchas cajas exactas.
+ *
  * El sistema NUNCA crea categorias solo: ni el OCR, ni el import de CSV, ni
  * las reglas de auto-categorizacion. Esto es lo que existe al arrancar; a
- * partir de ahi las editas vos desde configuracion.
+ * partir de ahi las editas vos desde configuracion (incluso creando
+ * subcategorias, que la UI sigue soportando; solo no vienen de fabrica).
  *
  * `system: true` marca las que no se pueden borrar porque el codigo depende
  * de ellas.
@@ -14,114 +21,31 @@ export type CategorySeed = {
   color: string;
   icon?: string;
   system?: boolean;
-  children?: { name: string; icon?: string }[];
 };
 
+// El orden es el de la lista al cargar un gasto: primero lo que se repite
+// todas las semanas, al final lo raro.
 export const DEFAULT_EXPENSE_CATEGORIES: CategorySeed[] = [
-  {
-    name: "Vivienda",
-    color: "#f97316",
-    icon: "house",
-    children: [
-      { name: "Alquiler" },
-      { name: "Gastos comunes" },
-      { name: "UTE" },
-      { name: "OSE" },
-      { name: "Internet y cable" },
-      { name: "Mantenimiento" },
-    ],
-  },
-  {
-    name: "Comida",
-    color: "#22c55e",
-    icon: "utensils",
-    children: [
-      { name: "Supermercado" },
-      { name: "Delivery" },
-      { name: "Restaurantes" },
-      { name: "Cafe y snacks" },
-    ],
-  },
-  {
-    name: "Transporte",
-    color: "#3b82f6",
-    icon: "bus",
-    children: [
-      { name: "STM y omnibus" },
-      { name: "Nafta" },
-      { name: "Taxi y apps" },
-      { name: "Estacionamiento y peajes" },
-      { name: "Mantenimiento del auto" },
-    ],
-  },
-  {
-    name: "Salud",
-    color: "#ef4444",
-    icon: "heart-pulse",
-    children: [
-      { name: "Mutualista" },
-      { name: "Farmacia" },
-      { name: "Consultas y estudios" },
-      { name: "Dentista y optica" },
-    ],
-  },
-  {
-    name: "Salidas y ocio",
-    color: "#a855f7",
-    icon: "party-popper",
-    children: [
-      { name: "Bares y boliches" },
-      { name: "Cine y teatro" },
-      { name: "Eventos y recitales" },
-      { name: "Deporte" },
-    ],
-  },
-  {
-    name: "Suscripciones",
-    color: "#06b6d4",
-    icon: "repeat",
-    children: [
-      { name: "Streaming" },
-      { name: "Software y apps" },
-      { name: "Gimnasio" },
-    ],
-  },
-  {
-    name: "Compras",
-    color: "#ec4899",
-    icon: "shopping-bag",
-    children: [
-      { name: "Ropa y calzado" },
-      { name: "Electronica" },
-      { name: "Hogar" },
-      { name: "Regalos" },
-    ],
-  },
-  {
-    name: "Educacion",
-    color: "#8b5cf6",
-    icon: "graduation-cap",
-    children: [{ name: "Cursos" }, { name: "Libros y material" }],
-  },
-  {
-    name: "Finanzas",
-    color: "#64748b",
-    icon: "landmark",
-    children: [
-      { name: "Comisiones bancarias" },
-      { name: "Intereses" },
-      { name: "Impuestos" },
-      { name: "Seguros" },
-    ],
-  },
-  {
-    name: "Personal",
-    color: "#f59e0b",
-    icon: "user",
-    children: [{ name: "Peluqueria" }, { name: "Cuidado personal" }],
-  },
-  { name: "Mascotas", color: "#84cc16", icon: "paw-print" },
-  { name: "Viajes", color: "#14b8a6", icon: "plane" },
+  { name: "Supermercado", color: "#22c55e", icon: "shopping-cart" },
+  // Comer afuera: restaurante, delivery, cafe, el pancho de la esquina.
+  { name: "Comida", color: "#f97316", icon: "utensils" },
+  { name: "Transporte", color: "#6366f1", icon: "bus" },
+  // Alquiler, gastos comunes, arreglos.
+  { name: "Casa", color: "#14b8a6", icon: "house" },
+  // UTE, OSE, internet, celular.
+  { name: "Servicios", color: "#0ea5e9", icon: "plug" },
+  { name: "Salidas", color: "#a855f7", icon: "party-popper" },
+  { name: "Salud", color: "#ef4444", icon: "heart-pulse" },
+  { name: "Deporte", color: "#84cc16", icon: "dumbbell" },
+  // Ropa, electronica, cosas para la casa, regalos.
+  { name: "Compras", color: "#eab308", icon: "shopping-bag" },
+  { name: "Suscripciones", color: "#ec4899", icon: "repeat" },
+  // Impuestos, comisiones del banco, seguros: la plata que se va sola.
+  { name: "Impuestos", color: "#475569", icon: "landmark" },
+  // Plata que le prestaste a alguien. Contablemente no es un gasto (es algo
+  // que te deben), pero tratarlo como gasto y anotar la devolucion en "Me
+  // devolvieron" cierra la cuenta sin inventar un modulo de deudas.
+  { name: "Prestar plata", color: "#b45309", icon: "hand-coins" },
   {
     // Destino de todo lo que el OCR o el import no logran mapear.
     name: "Sin categorizar",
@@ -135,9 +59,8 @@ export const DEFAULT_INCOME_CATEGORIES: CategorySeed[] = [
   { name: "Sueldo", color: "#22c55e", icon: "wallet" },
   { name: "Aguinaldo", color: "#16a34a", icon: "gift" },
   { name: "Freelance", color: "#0ea5e9", icon: "laptop" },
-  { name: "Ventas", color: "#f59e0b", icon: "tag" },
-  { name: "Rendimientos", color: "#8b5cf6", icon: "trending-up" },
-  { name: "Reintegros", color: "#06b6d4", icon: "undo" },
+  // La contracara de "Prestar plata".
+  { name: "Me devolvieron", color: "#f59e0b", icon: "hand-coins" },
   {
     name: "Otros ingresos",
     color: "#94a3b8",

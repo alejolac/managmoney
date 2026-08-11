@@ -129,19 +129,12 @@ async function seed() {
 
   const categories = await prisma.category.findMany({
     where: { workspaceId: workspace.id },
-    include: { parent: { select: { name: true } } },
+    select: { id: true, name: true },
   });
 
-  /** Busca por "Padre > Hija" o por nombre suelto. */
-  function cat(path: string): string {
-    const [parent, child] = path.includes(" > ")
-      ? path.split(" > ")
-      : [null, path];
-
-    const found = categories.find((c) =>
-      parent ? c.name === child && c.parent?.name === parent : c.name === child,
-    );
-    if (!found) throw new Error(`No existe la categoria "${path}"`);
+  function cat(name: string): string {
+    const found = categories.find((c) => c.name === name);
+    if (!found) throw new Error(`No existe la categoria "${name}"`);
     return found.id;
   }
 
@@ -223,17 +216,17 @@ async function seed() {
     }
 
     // Fijos
-    push({ type: "EXPENSE", accountId: pesos.id, categoryId: cat("Vivienda > Alquiler"), amount: "24000", day: 5, description: "Alquiler" });
-    push({ type: "EXPENSE", accountId: pesos.id, categoryId: cat("Vivienda > Gastos comunes"), amount: "3800", day: 5, description: "Gastos comunes" });
-    push({ type: "EXPENSE", accountId: pesos.id, categoryId: cat("Vivienda > UTE"), amount: around(2600, 900), day: 12, description: "UTE", merchant: "UTE" });
-    push({ type: "EXPENSE", accountId: pesos.id, categoryId: cat("Vivienda > OSE"), amount: around(950, 200), day: 14, description: "OSE", merchant: "OSE" });
-    push({ type: "EXPENSE", accountId: pesos.id, categoryId: cat("Vivienda > Internet y cable"), amount: "1690", day: 10, description: "Internet", merchant: "Antel" });
-    push({ type: "EXPENSE", accountId: pesos.id, categoryId: cat("Salud > Mutualista"), amount: "3450", day: 8, description: "Mutualista" });
+    push({ type: "EXPENSE", accountId: pesos.id, categoryId: cat("Casa"), amount: "24000", day: 5, description: "Alquiler" });
+    push({ type: "EXPENSE", accountId: pesos.id, categoryId: cat("Casa"), amount: "3800", day: 5, description: "Gastos comunes" });
+    push({ type: "EXPENSE", accountId: pesos.id, categoryId: cat("Servicios"), amount: around(2600, 900), day: 12, description: "UTE", merchant: "UTE" });
+    push({ type: "EXPENSE", accountId: pesos.id, categoryId: cat("Servicios"), amount: around(950, 200), day: 14, description: "OSE", merchant: "OSE" });
+    push({ type: "EXPENSE", accountId: pesos.id, categoryId: cat("Servicios"), amount: "1690", day: 10, description: "Internet", merchant: "Antel" });
+    push({ type: "EXPENSE", accountId: pesos.id, categoryId: cat("Salud"), amount: "3450", day: 8, description: "Mutualista" });
 
     // Suscripciones, en la tarjeta como en la vida real
-    push({ type: "EXPENSE", accountId: tarjeta.id, categoryId: cat("Suscripciones > Streaming"), amount: "590", day: 15, description: "Netflix", merchant: "Netflix" });
-    push({ type: "EXPENSE", accountId: tarjeta.id, categoryId: cat("Suscripciones > Streaming"), amount: "350", day: 16, description: "Spotify", merchant: "Spotify" });
-    push({ type: "EXPENSE", accountId: tarjeta.id, categoryId: cat("Suscripciones > Gimnasio"), amount: "1900", day: 3, description: "Gimnasio" });
+    push({ type: "EXPENSE", accountId: tarjeta.id, categoryId: cat("Suscripciones"), amount: "590", day: 15, description: "Netflix", merchant: "Netflix" });
+    push({ type: "EXPENSE", accountId: tarjeta.id, categoryId: cat("Suscripciones"), amount: "350", day: 16, description: "Spotify", merchant: "Spotify" });
+    push({ type: "EXPENSE", accountId: tarjeta.id, categoryId: cat("Deporte"), amount: "1900", day: 3, description: "Gimnasio" });
 
     // Supermercado: cuatro o cinco compras
     const compras = 4 + Math.round(random());
@@ -241,7 +234,7 @@ async function seed() {
       push({
         type: "EXPENSE",
         accountId: random() > 0.4 ? pesos.id : tarjeta.id,
-        categoryId: cat("Comida > Supermercado"),
+        categoryId: cat("Supermercado"),
         amount: around(4200, 2200),
         day: 3 + i * 6,
         description: "Supermercado",
@@ -250,12 +243,12 @@ async function seed() {
     }
 
     // Transporte
-    push({ type: "EXPENSE", accountId: pesos.id, categoryId: cat("Transporte > STM y omnibus"), amount: around(1900, 400), day: 2, description: "Carga STM" });
+    push({ type: "EXPENSE", accountId: pesos.id, categoryId: cat("Transporte"), amount: around(1900, 400), day: 2, description: "Carga STM" });
     for (let i = 0; i < 2; i++) {
       push({
         type: "EXPENSE",
         accountId: pesos.id,
-        categoryId: cat("Transporte > Nafta"),
+        categoryId: cat("Transporte"),
         amount: around(2900, 700),
         day: 9 + i * 13,
         description: "Nafta",
@@ -264,7 +257,7 @@ async function seed() {
       });
     }
     if (random() > 0.5) {
-      push({ type: "EXPENSE", accountId: efectivo.id, categoryId: cat("Transporte > Taxi y apps"), amount: around(700, 300), day: 22, description: "Uber" });
+      push({ type: "EXPENSE", accountId: efectivo.id, categoryId: cat("Transporte"), amount: around(700, 300), day: 22, description: "Uber" });
     }
 
     // Salidas: lo que se lleva el sobre
@@ -273,9 +266,7 @@ async function seed() {
       push({
         type: "EXPENSE",
         accountId: random() > 0.5 ? tarjeta.id : efectivo.id,
-        categoryId: cat(
-          pick(["Comida > Restaurantes", "Salidas y ocio > Bares y boliches", "Comida > Delivery"]),
-        ),
+        categoryId: cat(pick(["Comida", "Salidas", "Comida"])),
         amount: around(1800, 900),
         day: 6 + i * 7,
         description: pick(["Salida", "Cena afuera", "Pedido", "Birras"]),
@@ -284,15 +275,15 @@ async function seed() {
     }
 
     // Varios que aparecen y desaparecen
-    push({ type: "EXPENSE", accountId: pesos.id, categoryId: cat("Comida > Cafe y snacks"), amount: around(900, 400), day: 11, description: "Cafe" });
+    push({ type: "EXPENSE", accountId: pesos.id, categoryId: cat("Comida"), amount: around(900, 400), day: 11, description: "Cafe" });
     if (random() > 0.4) {
-      push({ type: "EXPENSE", accountId: pesos.id, categoryId: cat("Salud > Farmacia"), amount: around(1200, 600), day: 19, description: "Farmacia" });
+      push({ type: "EXPENSE", accountId: pesos.id, categoryId: cat("Salud"), amount: around(1200, 600), day: 19, description: "Farmacia" });
     }
     if (random() > 0.6) {
-      push({ type: "EXPENSE", accountId: tarjeta.id, categoryId: cat("Compras > Ropa y calzado"), amount: around(4500, 2500), day: 21, description: "Ropa" });
+      push({ type: "EXPENSE", accountId: tarjeta.id, categoryId: cat("Compras"), amount: around(4500, 2500), day: 21, description: "Ropa" });
     }
     if (random() > 0.7) {
-      push({ type: "EXPENSE", accountId: pesos.id, categoryId: cat("Personal > Peluqueria"), amount: "1100", day: 24, description: "Peluqueria" });
+      push({ type: "EXPENSE", accountId: pesos.id, categoryId: cat("Prestar plata"), amount: "1500", day: 24, description: "Le preste a un amigo" });
     }
   }
 
@@ -393,7 +384,7 @@ async function seed() {
       purchaseDate: toDateOnly("2026-03-20"),
       description: "Heladera",
       merchant: "Tienda Inglesa",
-      categoryId: cat("Compras > Hogar"),
+      categoryId: cat("Compras"),
     },
     workspace.baseCurrency,
   );
@@ -407,7 +398,7 @@ async function seed() {
       purchaseDate: toDateOnly("2026-05-08"),
       description: "Notebook",
       merchant: "Mercado Libre",
-      categoryId: cat("Compras > Electronica"),
+      categoryId: cat("Compras"),
     },
     workspace.baseCurrency,
   );
@@ -491,12 +482,12 @@ async function seed() {
   console.log("Creando compromisos...");
 
   const commitments = [
-    { kind: "SUBSCRIPTION" as const, type: "EXPENSE" as const, description: "Netflix", amount: "590", accountId: tarjeta.id, categoryId: cat("Suscripciones > Streaming"), frequency: "MONTHLY" as const, day: 15, mode: "AUTO" as const },
-    { kind: "SUBSCRIPTION" as const, type: "EXPENSE" as const, description: "Spotify", amount: "350", accountId: tarjeta.id, categoryId: cat("Suscripciones > Streaming"), frequency: "MONTHLY" as const, day: 16, mode: "AUTO" as const },
-    { kind: "SUBSCRIPTION" as const, type: "EXPENSE" as const, description: "Gimnasio", amount: "1900", accountId: tarjeta.id, categoryId: cat("Suscripciones > Gimnasio"), frequency: "MONTHLY" as const, day: 3, mode: "CONFIRM" as const },
-    { kind: "SUBSCRIPTION" as const, type: "EXPENSE" as const, description: "Dominio y hosting", amount: "9600", accountId: tarjeta.id, categoryId: cat("Suscripciones > Software y apps"), frequency: "YEARLY" as const, day: 12, mode: "CONFIRM" as const },
-    { kind: "FIXED_EXPENSE" as const, type: "EXPENSE" as const, description: "Alquiler", amount: "24000", accountId: pesos.id, categoryId: cat("Vivienda > Alquiler"), frequency: "MONTHLY" as const, day: 5, mode: "CONFIRM" as const },
-    { kind: "FIXED_EXPENSE" as const, type: "EXPENSE" as const, description: "Mutualista", amount: "3450", accountId: pesos.id, categoryId: cat("Salud > Mutualista"), frequency: "MONTHLY" as const, day: 8, mode: "CONFIRM" as const },
+    { kind: "SUBSCRIPTION" as const, type: "EXPENSE" as const, description: "Netflix", amount: "590", accountId: tarjeta.id, categoryId: cat("Suscripciones"), frequency: "MONTHLY" as const, day: 15, mode: "AUTO" as const },
+    { kind: "SUBSCRIPTION" as const, type: "EXPENSE" as const, description: "Spotify", amount: "350", accountId: tarjeta.id, categoryId: cat("Suscripciones"), frequency: "MONTHLY" as const, day: 16, mode: "AUTO" as const },
+    { kind: "SUBSCRIPTION" as const, type: "EXPENSE" as const, description: "Gimnasio", amount: "1900", accountId: tarjeta.id, categoryId: cat("Deporte"), frequency: "MONTHLY" as const, day: 3, mode: "CONFIRM" as const },
+    { kind: "SUBSCRIPTION" as const, type: "EXPENSE" as const, description: "Dominio y hosting", amount: "9600", accountId: tarjeta.id, categoryId: cat("Suscripciones"), frequency: "YEARLY" as const, day: 12, mode: "CONFIRM" as const },
+    { kind: "FIXED_EXPENSE" as const, type: "EXPENSE" as const, description: "Alquiler", amount: "24000", accountId: pesos.id, categoryId: cat("Casa"), frequency: "MONTHLY" as const, day: 5, mode: "CONFIRM" as const },
+    { kind: "FIXED_EXPENSE" as const, type: "EXPENSE" as const, description: "Mutualista", amount: "3450", accountId: pesos.id, categoryId: cat("Salud"), frequency: "MONTHLY" as const, day: 8, mode: "CONFIRM" as const },
     { kind: "INCOME" as const, type: "INCOME" as const, description: "Sueldo", amount: "92000", accountId: pesos.id, categoryId: cat("Sueldo"), frequency: "MONTHLY" as const, day: 1, mode: "CONFIRM" as const },
   ];
 
