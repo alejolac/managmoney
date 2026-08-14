@@ -37,6 +37,9 @@ export const DEFAULT_EXPENSE_CATEGORIES: CategorySeed[] = [
   { name: "Salidas", color: "#a855f7", icon: "party-popper" },
   { name: "Salud", color: "#ef4444", icon: "heart-pulse" },
   { name: "Deporte", color: "#84cc16", icon: "dumbbell" },
+  // Facultad, cursos, libros, materiales. Se paga en tandas grandes y en
+  // meses puntuales: mezclarlo con Compras escondia el bulto.
+  { name: "Estudio", color: "#3b82f6", icon: "graduation-cap" },
   // Ropa, electronica, cosas para la casa.
   { name: "Compras", color: "#eab308", icon: "shopping-bag" },
   // Aparte de Compras: no es plata que gastas en vos y en diciembre se
